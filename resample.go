@@ -27,6 +27,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 )
 
 type Resampler struct {
@@ -138,17 +139,19 @@ func (resampler *Resampler) resampleChannelData(data []float64) []float64 {
 	channelTo := float64(resampler.ToRate) / float64(resampler.Channels)
 	step := channelFrom / channelTo
 
-	output := []float64{}
+	output := make([]float64, int(math.Ceil(float64(availSamples)/step)))
 
 	// Resample each position from x0
+	i := 0
 	for x := step; x < float64(availSamples); x += step {
 		xi0 := float64(uint64(x))
 		yi0 := uint64(xi0)
 		yo := spline(xi0, data[yi0:yi0+4], x)
 
-		output = append(output, yo/float64(0x7FFF))
+		output[i] = yo / float64(0x7FFF)
+		i++
 	}
-	return output
+	return output[:i]
 }
 
 func spline(xi float64, yi []float64, xo float64) float64 {
