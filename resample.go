@@ -143,7 +143,6 @@ func (resampler *Resampler) resampleChannelData(data []float64) []float64 {
 	// Resample each position from x0
 	for x := step; x < float64(availSamples); x += step {
 		xi0 := float64(uint64(x))
-		xi := []float64{xi0, xi0 + 1, xi0 + 2, xi0 + 3}
 		yi0 := uint64(xi0)
 		yi := []float64{
 			float64(data[yi0]),
@@ -153,7 +152,7 @@ func (resampler *Resampler) resampleChannelData(data []float64) []float64 {
 		}
 		xo := []float64{x}
 		yo := []float64{0.0}
-		if err := spline(xi, yi, xo, yo); err != nil {
+		if err := spline(xi0, yi, xo, yo); err != nil {
 			return data[:]
 		}
 
@@ -162,10 +161,7 @@ func (resampler *Resampler) resampleChannelData(data []float64) []float64 {
 	return output
 }
 
-func spline(xi, yi, xo, yo []float64) (err error) {
-	if len(xi) != 4 {
-		return fmt.Errorf("invalid xi")
-	}
+func spline(xi float64, yi, xo, yo []float64) (err error) {
 	if len(yi) != 4 {
 		return fmt.Errorf("invalid yi")
 	}
@@ -176,18 +172,17 @@ func spline(xi, yi, xo, yo []float64) (err error) {
 		return fmt.Errorf("invalid yo")
 	}
 
-	x0, x1, x2, x3 := xi[0], xi[1], xi[2], xi[3]
 	y0, y1, y2, y3 := yi[0], yi[1], yi[2], yi[3]
 	c1, c2 := splineC1(yi), splineC2(yi)
 	m1, m2 := splineM1(c1, c2), splineM2(c1, c2) // m0=m3=0
 
 	for k, v := range xo {
-		if v <= x1 {
-			yo[k] = splineZ0(m1, 1, x0, x1, y0, y1, v)
-		} else if v <= x2 {
-			yo[k] = splineZ1(m1, m2, 1, x1, x2, y1, y2, v)
+		if v <= xi+1 {
+			yo[k] = splineZ0(m1, 1, xi, xi+1, y0, y1, v)
+		} else if v <= xi+2 {
+			yo[k] = splineZ1(m1, m2, 1, xi+1, xi+2, y1, y2, v)
 		} else {
-			yo[k] = splineZ2(m2, 1, x2, x3, y2, y3, v)
+			yo[k] = splineZ2(m2, 1, xi+2, xi+3, y2, y3, v)
 		}
 	}
 
