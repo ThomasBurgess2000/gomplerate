@@ -23,7 +23,7 @@
 //
 // For more information, please refer to <http://unlicense.org/>
 
-package gomplerate
+package main
 
 import (
 	"fmt"
@@ -178,17 +178,16 @@ func spline(xi, yi, xo, yo []float64) (err error) {
 
 	x0, x1, x2, x3 := xi[0], xi[1], xi[2], xi[3]
 	y0, y1, y2, y3 := yi[0], yi[1], yi[2], yi[3]
-	h0, h1, h2, _, u1, l2, _ := splineLU(xi)
-	c1, c2 := splineC1(yi, h0, h1), splineC2(yi, h1, h2)
-	m1, m2 := splineM1(c1, c2, u1, l2), splineM2(c1, c2, u1, l2) // m0=m3=0
+	c1, c2 := splineC1(yi), splineC2(yi)
+	m1, m2 := splineM1(c1, c2), splineM2(c1, c2) // m0=m3=0
 
 	for k, v := range xo {
 		if v <= x1 {
-			yo[k] = splineZ0(m1, h0, x0, x1, y0, y1, v)
+			yo[k] = splineZ0(m1, 1, x0, x1, y0, y1, v)
 		} else if v <= x2 {
-			yo[k] = splineZ1(m1, m2, h1, x1, x2, y1, y2, v)
+			yo[k] = splineZ1(m1, m2, 1, x1, x2, y1, y2, v)
 		} else {
-			yo[k] = splineZ2(m2, h2, x2, x3, y2, y3, v)
+			yo[k] = splineZ2(m2, 1, x2, x3, y2, y3, v)
 		}
 	}
 
@@ -219,34 +218,20 @@ func splineZ2(m2, h2, x2, x3, y2, y3, x float64) float64 {
 	return v0 + v1 + v2 + v3
 }
 
-func splineM1(c1, c2, u1, l2 float64) float64 {
-	return (c1/u1 - c2/2) / (2/u1 - l2/2)
+func splineM1(c1, c2 float64) float64 {
+	return (c1*2 - c2/2) / 3.75
 }
 
-func splineM2(c1, c2, u1, l2 float64) float64 {
-	return (c1/2 - c2/l2) / (u1/2 - 2/l2)
+func splineM2(c1, c2 float64) float64 {
+	return (c1/2 - c2*2) / -7.75
 }
 
-func splineC1(yi []float64, h0, h1 float64) float64 {
+func splineC1(yi []float64) float64 {
 	y0, y1, y2, _ := yi[0], yi[1], yi[2], yi[3]
-	return 6.0 / (h0 + h1) * ((y2-y1)/h1 - (y1-y0)/h0)
+	return 3 * ((y2 - y1) - (y1 - y0))
 }
 
-func splineC2(yi []float64, h1, h2 float64) float64 {
+func splineC2(yi []float64) float64 {
 	_, y1, y2, y3 := yi[0], yi[1], yi[2], yi[3]
-	return 6.0 / (h1 + h2) * ((y3-y2)/h2 - (y2-y1)/h1)
-}
-
-func splineLU(xi []float64) (h0, h1, h2, l1, u1, l2, u2 float64) {
-	x0, x1, x2, x3 := xi[0], xi[1], xi[2], xi[3]
-
-	h0, h1, h2 = x1-x0, x2-x1, x3-x2
-
-	l1 = h0 / (h1 + h0)
-	u1 = h1 / (h1 + h0)
-
-	l2 = h1 / (h2 + h1)
-	u2 = h2 / (h2 + h1)
-
-	return
+	return 3 * ((y3 - y2) - (y2 - y1))
 }
