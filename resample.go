@@ -150,43 +150,25 @@ func (resampler *Resampler) resampleChannelData(data []float64) []float64 {
 			float64(data[yi0+2]),
 			float64(data[yi0+3]),
 		}
-		xo := []float64{x}
-		yo := []float64{0.0}
-		if err := spline(xi0, yi, xo, yo); err != nil {
-			return data[:]
-		}
+		yo := spline(xi0, yi, x)
 
-		output = append(output, yo[0]/float64(0x7FFF))
+		output = append(output, yo/float64(0x7FFF))
 	}
 	return output
 }
 
-func spline(xi float64, yi, xo, yo []float64) (err error) {
-	if len(yi) != 4 {
-		return fmt.Errorf("invalid yi")
-	}
-	if len(xo) == 0 {
-		return fmt.Errorf("invalid xo")
-	}
-	if len(yo) != len(xo) {
-		return fmt.Errorf("invalid yo")
-	}
-
+func spline(xi float64, yi []float64, xo float64) float64 {
 	y0, y1, y2, y3 := yi[0], yi[1], yi[2], yi[3]
 	c1, c2 := splineC1(yi), splineC2(yi)
 	m1, m2 := splineM1(c1, c2), splineM2(c1, c2) // m0=m3=0
 
-	for k, v := range xo {
-		if v <= xi+1 {
-			yo[k] = splineZ0(m1, 1, xi, xi+1, y0, y1, v)
-		} else if v <= xi+2 {
-			yo[k] = splineZ1(m1, m2, 1, xi+1, xi+2, y1, y2, v)
-		} else {
-			yo[k] = splineZ2(m2, 1, xi+2, xi+3, y2, y3, v)
-		}
+	if xo <= xi+1 {
+		return splineZ0(m1, 1, xi, xi+1, y0, y1, xo)
+	} else if xo <= xi+2 {
+		return splineZ1(m1, m2, 1, xi+1, xi+2, y1, y2, xo)
+	} else {
+		return splineZ2(m2, 1, xi+2, xi+3, y2, y3, xo)
 	}
-
-	return
 }
 
 func splineZ0(m1, h0, x0, x1, y0, y1, x float64) float64 {
