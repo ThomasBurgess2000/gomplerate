@@ -172,11 +172,10 @@ func spline(xi float64, yi []float64, xo float64) float64 {
 }
 
 func splineZ0(m1, h0, x0, x1, y0, y1, x float64) float64 {
-	v0 := 0.0
 	v1 := (x - x0) * (x - x0) * (x - x0) * m1 / (6 * h0)
 	v2 := -1.0 * y0 * (x - x1) / h0
 	v3 := (y1 - h0*h0*m1/6) * (x - x0) / h0
-	return v0 + v1 + v2 + v3
+	return v1 + v2 + v3
 }
 
 func splineZ1(m1, m2, h1, x1, x2, y1, y2, x float64) float64 {
@@ -189,10 +188,9 @@ func splineZ1(m1, m2, h1, x1, x2, y1, y2, x float64) float64 {
 
 func splineZ2(m2, h2, x2, x3, y2, y3, x float64) float64 {
 	v0 := -1.0 * (x - x3) * (x - x3) * (x - x3) * m2 / (6 * h2)
-	v1 := 0.0
 	v2 := -1.0 * (y2 - h2*h2*m2/6) * (x - x3) / h2
 	v3 := y3 * (x - x2) / h2
-	return v0 + v1 + v2 + v3
+	return v0 + v2 + v3
 }
 
 func splineM1(c1, c2 float64) float64 {
