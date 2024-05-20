@@ -23,7 +23,7 @@
 //
 // For more information, please refer to <http://unlicense.org/>
 
-package main
+package gomplerate
 
 import (
 	"fmt"

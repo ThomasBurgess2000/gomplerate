@@ -2,6 +2,8 @@
 
 A fast and simple pure Go audio resampling (sample rate conversion) library with zero dependencies.
 
+This fork provides a couple of low-hanging optimizations, while keeping the functionality intact.
+
 # Example
 
 ## Resample audio with 2 channels from 11kHz to 44.1kHz
