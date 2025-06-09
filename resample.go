@@ -146,10 +146,12 @@ func (resampler *Resampler) resampleChannelData(data []float64) []float64 {
 	for x := step; x < float64(availSamples); x += step {
 		xi0 := float64(uint64(x))
 		yi0 := uint64(xi0)
+		if yi0+3 >= uint64(len(data)) {
+			break
+		}
 		yo := spline(xi0, data[yi0:yi0+4], x)
 
-		output[i] = yo / float64(0x7FFF)
-		i++
+		output = append(output, yo)
 	}
 	return output[:i]
 }
@@ -195,7 +197,7 @@ func splineM1(c1, c2 float64) float64 {
 }
 
 func splineM2(c1, c2 float64) float64 {
-	return (c1/2 - c2*2) / -7.75
+	return (c1/2 - c2*2) / -3.75
 }
 
 func splineC1(yi []float64) float64 {
