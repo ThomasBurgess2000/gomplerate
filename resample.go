@@ -108,21 +108,32 @@ func (resampler *Resampler) ResampleFloat64(data []float64) []float64 {
 }
 
 // Resamples an int16 audio buffer. Returns the resampled buffer.
-func (resampler *Resampler) ResampleInt16(data []int16) (resampledi16 []int16) {
-	// Convert the data to float64
-	f64data := make([]float64, len(data))
-	for i := 0; i < len(data); i++ {
-		f64data[i] = float64(data[i]) / float64(0x7FFF)
+func (r *Resampler) ResampleInt16(data []int16) []int16 {
+	if len(data) == 0 {
+		return nil
 	}
-	// Resample
-	resampledf64 := resampler.ResampleFloat64(f64data)
 
-	// Convert back to int16
-	resampledi16 = make([]int16, len(resampledf64))
-	for i := 0; i < len(resampledf64); i++ {
-		resampledi16[i] = int16(resampledf64[i] * float64(0x7FFF))
+	// → float64 in (‑1 … +1)
+	f := 1.0 / 32768.0 // use 32768 so −32768 maps to −1.0
+	f64 := make([]float64, len(data))
+	for i, v := range data {
+		f64[i] = float64(v) * f
 	}
-	return
+
+	outF64 := r.ResampleFloat64(f64)
+
+	// ← int16 with hard‑limit saturation
+	out := make([]int16, len(outF64))
+	for i, v := range outF64 {
+		if v > 1 {
+			v = 1
+		}
+		if v < -1 {
+			v = -1
+		}
+		out[i] = int16(math.Round(v * 32767)) // avoid wrap‑around
+	}
+	return out
 }
 
 func (resampler *Resampler) resampleChannelData(data []float64) []float64 {
@@ -135,8 +146,8 @@ func (resampler *Resampler) resampleChannelData(data []float64) []float64 {
 	availSamples := len(data) - 16
 
 	// The resample step between new samples
-	channelFrom := float64(resampler.FromRate) / float64(resampler.Channels)
-	channelTo := float64(resampler.ToRate) / float64(resampler.Channels)
+	channelFrom := float64(resampler.FromRate)
+	channelTo := float64(resampler.ToRate)
 	step := channelFrom / channelTo
 
 	output := make([]float64, int(math.Ceil(float64(availSamples)/step)))
