@@ -1,3 +1,3 @@
-module github.com/sukus21/gomplerate
+module github.com/ThomasBurgess2000/gomplerate
 
 go 1.19
